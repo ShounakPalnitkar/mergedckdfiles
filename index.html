@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CKD Management Hub</title>
+
+  <!-- Chart.js & Plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f0f4f7;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    .centered {
+      text-align: center;
+      margin-top: 20vh;
+    }
+
+    .centered h1 {
+      font-size: 2rem;
+      color: #1976D2;
+    }
+
+    .start-button {
+      margin-top: 2rem;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      background: #1976D2;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+    }
+
+    .start-button:hover {
+      background-color: #125a9c;
+    }
+
+    .nav-buttons {
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    .nav-buttons button {
+      padding: 0.75rem 1.5rem;
+      margin: 0 1rem;
+      border: none;
+      border-radius: 20px;
+      background: #007BFF;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .nav-buttons button:hover {
+      background: #0056b3;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .brochure-container, .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Landing Page -->
+  <div id="landingPage" class="centered">
+    <h1>Chronic Kidney Disease Management Hub:<br>Nutrition & Progress Tracker</h1>
+    <button class="start-button" onclick="startApp()">Start</button>
+  </div>
+
+  <!-- Main App -->
+  <div id="mainApp" class="hidden">
+    <div class="nav-buttons">
+      <button onclick="toggleView('plannerSection')">Nutrition Planner</button>
+      <button onclick="toggleView('dashboardSection')">CKD Dashboard</button>
+    </div>
+
+    <!-- Planner Section -->
+    <div id="plannerSection">
+      <!-- 🍎 Paste FULL BODY from your Nutrition Planner HTML here (inside <body>) -->
+      <!-- Include all form inputs, chart containers, buttons, and script logic for planner -->
+      <!-- Begin Nutrition Planner UI -->
+      <div class="input-group">
+        <label>Age (18-100 years)</label>
+        <input type="number" id="age" min="18" max="100" placeholder="Enter your age">
+      </div>
+      <div class="input-group">
+        <label>Weight (30-300 kg)</label>
+        <input type="number" id="weight" min="30" max="300" placeholder="Enter weight in kg">
+      </div>
+      <div class="input-group">
+        <label>Height (100-250 cm)</label>
+        <input type="number" id="height" min="100" max="250" placeholder="Enter height in cm">
+      </div>
+      <div class="input-group">
+        <label>CKD Stage</label>
+        <select id="stage">
+          <option value="">Select CKD Stage</option>
+          <option value="1">Stage 1</option>
+          <option value="2">Stage 2</option>
+          <option value="3">Stage 3</option>
+          <option value="4">Stage 4</option>
+          <option value="5">Stage 5</option>
+        </select>
+      </div>
+      <div style="text-align: center; margin: 2rem 0;">
+        <button onclick="generatePlan()">Generate Custom Plan</button>
+      </div>
+      <div id="planOutput" class="plan-results" style="display: none;">
+        <h2 style="color: #4CAF50;">Clinical Nutrition Plan</h2>
+        <div class="chart-container">
+          <canvas id="nutritionChart"></canvas>
+        </div>
+        <div id="planDetails"></div>
+        <button onclick="generatePDF()" style="background: #4CAF50; margin-top: 1rem;">Download Full Plan</button>
+      </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboardSection" class="hidden">
+      <!-- 📊 Paste FULL BODY from your CKD Dashboard HTML here (inside <body>) -->
+      <!-- Include funnel, charts, and script logic -->
+      <div class="funnel-container">
+        <h2>CKD Progression Funnel</h2>
+        <div class="funnel-stage stage-1" data-stage="1">Stage 1 (eGFR ≥90)</div>
+        <div class="funnel-stage stage-2" data-stage="2">Stage 2 (eGFR 60-89)</div>
+        <div class="funnel-stage stage-3" data-stage="3">Stage 3 (eGFR 30-59)</div>
+        <div class="funnel-stage stage-4" data-stage="4">Stage 4 (eGFR 15-29)</div>
+        <div class="funnel-stage stage-5" data-stage="5">Stage 5 (eGFR <15)</div>
+      </div>
+      <div class="stage-info">
+        <h2 id="stageTitle">Stage Information</h2>
+        <div id="progressionTime"></div>
+        <h3>Symptoms</h3>
+        <ul class="symptom-list" id="symptomsList"></ul>
+        <div class="chart-container">
+          <canvas id="progressChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="symptomDistribution"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="stageDuration"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Navigation Logic -->
+  <script>
+    function startApp() {
+      document.getElementById('landingPage').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+    }
+
+    function toggleView(sectionId) {
+      document.getElementById('plannerSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.add('hidden');
+      document.getElementById(sectionId).classList.remove('hidden');
+    }
+  </script>
+
+  <!-- Include your Planner JS and Dashboard JS scripts here -->
+  <!-- 🧠 Paste your script logic for `generatePlan()`, Chart.js, and CKD progression handling -->
+</body>
+</html>
